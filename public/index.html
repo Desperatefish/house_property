@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>买房决策看板 · 南京江宁</title>
+    <meta name="description" content="南京江宁买房决策跟踪看板，房源对比、财务测算、看房笔记">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="买房看板">
+    <meta name="theme-color" content="#0a0e1a">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== Design Tokens ===== */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.85);
+            --bg-glass: rgba(255, 255, 255, 0.04);
+            --bg-glass-hover: rgba(255, 255, 255, 0.08);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-blue-glow: rgba(59, 130, 246, 0.25);
+            --accent-emerald: #10b981;
+            --accent-emerald-glow: rgba(16, 185, 129, 0.2);
+            --accent-amber: #f59e0b;
+            --accent-amber-glow: rgba(245, 158, 11, 0.2);
+            --accent-rose: #f43f5e;
+            --accent-rose-glow: rgba(244, 63, 94, 0.2);
+            --accent-violet: #8b5cf6;
+            --accent-violet-glow: rgba(139, 92, 246, 0.2);
+            --gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-card: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.05) 100%);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* ===== Layout ===== */
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            padding: 32px 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-hero);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* ===== Buttons ===== */
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--border-glass-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 16px var(--accent-blue-glow);
+        }
+
+        .btn-danger {
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* ===== Summary Cards (Top KPIs) ===== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            transition: var(--transition);
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .kpi-value.blue { color: var(--accent-blue); }
+        .kpi-value.emerald { color: var(--accent-emerald); }
+        .kpi-value.amber { color: var(--accent-amber); }
+        .kpi-value.rose { color: var(--accent-rose); }
+        .kpi-value.violet { color: var(--accent-violet); }
+
+        .kpi-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ===== Tabs ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            width: fit-content;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 8px var(--accent-blue-glow);
+        }
+
+        /* ===== Tab Content ===== */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Property Cards ===== */
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .property-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .property-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-hero);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .property-card:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-card), var(--shadow-glow);
+        }
+
+        .property-card:hover::before {
+            opacity: 1;
+        }
+
+        .property-card.favorite {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .property-card.favorite::before {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .card-name {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            flex: 1;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .fav-btn, .del-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .fav-btn:hover {
+            color: var(--accent-amber);
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .fav-btn.active {
+            color: var(--accent-amber);
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .del-btn:hover {
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.3);
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .meta-tag {
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 500;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+        }
+
+        .meta-tag.highlight {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.25);
+            color: var(--accent-blue);
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .stat-value.price { color: var(--accent-rose); }
+        .stat-value.area { color: var(--accent-emerald); }
+        .stat-value.unit-price { color: var(--accent-violet); }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Rating Stars */
+        .card-rating {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--bg-glass);
+            border-radius: var(--radius-sm);
+        }
+
+        .rating-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 55px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+        }
+
+        .star {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .star:hover, .star.active {
+            color: var(--accent-amber);
+            transform: scale(1.15);
+        }
+
+        /* Notes */
+        .card-notes {
+            margin-top: 12px;
+        }
+
+        .card-notes textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 12px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        .card-notes textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+
+        .card-notes textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ===== Financial Calculator Tab ===== */
+        .calc-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .calc-container { grid-template-columns: 1fr; }
+            .property-grid { grid-template-columns: 1fr; }
+        }
+
+        .calc-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+        }
+
+        .calc-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .result-item {
+            padding: 16px;
+            background: var(--bg-glass);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glass);
+        }
+
+        .result-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .result-value.highlight {
+            color: var(--accent-emerald);
+        }
+
+        /* ===== Compare Table ===== */
+        .compare-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-glass);
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .compare-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--bg-glass);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .compare-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            color: var(--text-primary);
+        }
+
+        .compare-table tr:hover td {
+            background: var(--bg-glass-hover);
+        }
+
+        .compare-table .best {
+            color: var(--accent-emerald);
+            font-weight: 600;
+        }
+
+        .compare-table .worst {
+            color: var(--accent-rose);
+        }
+
+        /* ===== Checklist Tab ===== */
+        .checklist {
+            max-width: 700px;
+        }
+
+        .checklist-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .checklist-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-glass);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .check-item:last-child { border-bottom: none; }
+
+        .check-item:hover { padding-left: 4px; }
+
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
+
+        .check-item label {
+            font-size: 13px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .check-item.done label {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            width: 90%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        /* ===== Timeline Tab ===== */
+        .timeline {
+            max-width: 700px;
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-glass);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateX(4px);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -27px;
+            top: 24px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-blue-glow);
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .timeline-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .timeline-delete {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover .timeline-delete { opacity: 1; }
+        .timeline-delete:hover {
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.3);
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        .timeline-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .timeline-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .timeline-input input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== Sorting Bar ===== */
+        .sort-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .sort-bar label {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .sort-bar select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sort-bar select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* ===== Age Legend ===== */
+        .age-legend {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .age-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .age-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .calc-container { grid-template-columns: 1fr; }
+            .property-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .app { padding: 0 12px; }
+            .header { padding: 20px 0 16px; flex-direction: column; align-items: flex-start; }
+            .header h1 { font-size: 20px; }
+            .header-actions { width: 100%; justify-content: flex-end; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .kpi-value { font-size: 22px; }
+            .kpi-card { padding: 14px 16px; }
+            .tabs { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+            .tab { white-space: nowrap; padding: 8px 14px; font-size: 12px; }
+            .property-grid { grid-template-columns: 1fr; }
+            .property-card { padding: 18px; }
+            .card-stats { gap: 8px; }
+            .stat-value { font-size: 16px; }
+            .card-rating { flex-wrap: wrap; gap: 8px; }
+            .modal { width: 95%; padding: 24px 20px; }
+            .modal h2 { font-size: 16px; }
+            .btn { padding: 8px 14px; font-size: 12px; }
+            .compare-table { font-size: 12px; }
+            .compare-table th, .compare-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">🏠</div>
+                <div>
+                    <h1>买房决策看板</h1>
+                    <div class="header-subtitle">南京 · 江宁核心区 · 2026</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="exportData()" title="导出数据">📥 导出</button>
+                <button class="btn" onclick="importData()" title="导入数据">📤 导入</button>
+                <button class="btn btn-primary" onclick="openAddModal()">＋ 添加房源</button>
+            </div>
+        </header>
+
+        <!-- KPI Summary -->
+        <div class="kpi-grid" id="kpiGrid">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="properties" onclick="switchTab('properties')">🏘️ 房源</button>
+            <button class="tab" data-tab="compare" onclick="switchTab('compare')">📊 对比</button>
+            <button class="tab" data-tab="calculator" onclick="switchTab('calculator')">🧮 月供计算</button>
+            <button class="tab" data-tab="checklist" onclick="switchTab('checklist')">✅ 看房清单</button>
+            <button class="tab" data-tab="timeline" onclick="switchTab('timeline')">📅 时间线</button>
+        </div>
+
+        <!-- Tab: Properties -->
+        <div class="tab-content active" id="tab-properties">
+            <div class="sort-bar">
+                <label>排序：</label>
+                <select id="sortSelect" onchange="renderProperties()">
+                    <option value="default">默认</option>
+                    <option value="price-asc">总价 ↑</option>
+                    <option value="price-desc">总价 ↓</option>
+                    <option value="unit-asc">单价 ↑</option>
+                    <option value="unit-desc">单价 ↓</option>
+                    <option value="area-desc">面积 ↓</option>
+                    <option value="age-asc">房龄 ↑（最新）</option>
+                    <option value="age-desc">房龄 ↓（最老）</option>
+                </select>
+                <div class="age-legend" style="margin-bottom:0;margin-left:auto;">
+                    <span class="age-legend-item"><span class="age-dot" style="background:var(--accent-emerald)"></span>≤5年 次新</span>
+                    <span class="age-legend-item"><span class="age-dot" style="background:var(--accent-blue)"></span>6-10年 适中</span>
+                    <span class="age-legend-item"><span class="age-dot" style="background:var(--accent-amber)"></span>11-15年</span>
+                    <span class="age-legend-item"><span class="age-dot" style="background:var(--accent-rose)"></span>>15年</span>
+                </div>
+            </div>
+            <div class="property-grid" id="propertyGrid">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Tab: Compare -->
+        <div class="tab-content" id="tab-compare">
+            <div class="compare-table-wrapper">
+                <table class="compare-table" id="compareTable">
+                    <!-- Rendered by JS -->
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Calculator -->
+        <div class="tab-content" id="tab-calculator">
+            <div class="calc-container">
+                <div class="calc-panel">
+                    <div class="calc-title">🧮 贷款参数</div>
+                    <div class="form-group">
+                        <label>房屋总价（万元）</label>
+                        <input type="number" id="calcPrice" value="190" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>首付金额（万元）</label>
+                        <input type="number" id="calcDown" value="65" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>公积金贷款（万元）</label>
+                        <input type="number" id="calcGjj" value="100" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>公积金利率（%）</label>
+                        <input type="number" id="calcGjjRate" value="2.6" step="0.1" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>商贷利率（%）</label>
+                        <input type="number" id="calcBizRate" value="3.0" step="0.1" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>贷款年限</label>
+                        <select id="calcYears" onchange="calculate()">
+                            <option value="10">10年</option>
+                            <option value="15">15年</option>
+                            <option value="20">20年</option>
+                            <option value="25">25年</option>
+                            <option value="30" selected>30年</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>建筑面积（㎡）<span style="color:var(--text-muted);font-weight:400"> — 用于契税计算</span></label>
+                        <input type="number" id="calcArea" value="91" oninput="calculate()">
+                    </div>
+                </div>
+                <div class="calc-panel">
+                    <div class="calc-title">📋 计算结果</div>
+                    <div class="result-grid" id="calcResults">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Checklist -->
+        <div class="tab-content" id="tab-checklist">
+            <div class="checklist" id="checklistContainer">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Tab: Timeline -->
+        <div class="tab-content" id="tab-timeline">
+            <div style="max-width:700px;">
+                <div class="timeline-input">
+                    <input type="text" id="timelineInput" placeholder="记录一条买房动态…" onkeypress="if(event.key==='Enter')addTimeline()">
+                    <button class="btn btn-primary" onclick="addTimeline()">记录</button>
+                </div>
+                <div class="timeline" id="timelineContainer">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Property Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <h2 id="modalTitle">添加房源</h2>
+            <div class="form-group">
+                <label>小区名称 *</label>
+                <input type="text" id="inputName" placeholder="如：万科翡翠公园">
+            </div>
+            <div class="form-group">
+                <label>户型</label>
+                <input type="text" id="inputLayout" placeholder="如：3室2厅">
+            </div>
+            <div class="form-group">
+                <label>面积（㎡）</label>
+                <input type="number" id="inputArea" placeholder="如：91.11">
+            </div>
+            <div class="form-group">
+                <label>总价（万元）*</label>
+                <input type="number" id="inputPrice" placeholder="如：220">
+            </div>
+            <div class="form-group">
+                <label>朝向</label>
+                <input type="text" id="inputOrientation" placeholder="如：南 / 南北">
+            </div>
+            <div class="form-group">
+                <label>楼层</label>
+                <input type="text" id="inputFloor" placeholder="如：中层 15/33">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>建造年份</label>
+                    <input type="number" id="inputYearBuilt" placeholder="如：2017">
+                </div>
+                <div class="form-group">
+                    <label>产权年限</label>
+                    <select id="inputPropertyYears">
+                        <option value="70">70年（住宅）</option>
+                        <option value="40">40年（商业）</option>
+                        <option value="50">50年（综合）</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>装修状态</label>
+                    <select id="inputDecoration">
+                        <option value="">请选择</option>
+                        <option value="毛坯">毛坯</option>
+                        <option value="简装">简装</option>
+                        <option value="精装">精装</option>
+                        <option value="豪装">豪装</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>建筑类型</label>
+                    <select id="inputBuildingType">
+                        <option value="">请选择</option>
+                        <option value="板楼">板楼</option>
+                        <option value="塔楼">塔楼</option>
+                        <option value="板塔结合">板塔结合</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>最近地铁站</label>
+                <input type="text" id="inputMetro" placeholder="如：3号线 九龙湖站 780m">
+            </div>
+            <div class="form-group">
+                <label>标签（逗号分隔）</label>
+                <input type="text" id="inputTags" placeholder="如：满两年,近地铁,精装,有地暖">
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <textarea id="inputNotes" rows="3" style="width:100%;padding:10px;border:1px solid var(--border-glass);border-radius:var(--radius-sm);background:var(--bg-glass);color:var(--text-primary);font-family:inherit;font-size:13px;resize:vertical;" placeholder="中介评价、自己的初始印象等"></textarea>
+            </div>
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="modal-actions">
+                <button class="btn" onclick="closeAddModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveProperty()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== State =====
+        let properties = [];
+        let checklist = [];
+        let timeline = [];
+
+        // ===== API Helpers =====
+        const API = '/api';
+        async function api(path, opts = {}) {
+            const res = await fetch(API + path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...opts,
+                body: opts.body ? JSON.stringify(opts.body) : undefined
+            });
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return res.json();
+        }
+
+        async function loadData() {
+            try {
+                const [props, cl, tl] = await Promise.all([
+                    api('/properties'),
+                    api('/checklist'),
+                    api('/timeline')
+                ]);
+                properties = props;
+                checklist = cl;
+                timeline = tl;
+            } catch (err) {
+                console.error('加载数据失败:', err);
+                showToast('⚠️ 数据加载失败，请检查网络');
+            }
+        }
+
+        // ===== Utility =====
+        function unitPrice(p) {
+            return p.area > 0 ? Math.round(p.price * 10000 / p.area) : 0;
+        }
+
+        function houseAge(p) {
+            if (!p.yearBuilt) return null;
+            return new Date().getFullYear() - p.yearBuilt;
+        }
+
+        function ageLabel(age) {
+            if (age === null || age === undefined) return '';
+            if (age <= 5) return '次新';
+            if (age <= 10) return '适中';
+            if (age <= 15) return '一般';
+            return '老旧';
+        }
+
+        function ageColor(age) {
+            if (age === null) return 'var(--text-muted)';
+            if (age <= 5) return 'var(--accent-emerald)';
+            if (age <= 10) return 'var(--accent-blue)';
+            if (age <= 15) return 'var(--accent-amber)';
+            return 'var(--accent-rose)';
+        }
+
+        function monthlyPayment(principal, ratePercent, years) {
+            if (principal <= 0) return 0;
+            const r = ratePercent / 100 / 12;
+            const n = years * 12;
+            if (r === 0) return principal * 10000 / n;
+            return (principal * 10000 * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        }
+
+        function formatMoney(n) {
+            return n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        // ===== Render KPIs =====
+        function renderKPIs() {
+            const grid = document.getElementById('kpiGrid');
+            const count = properties.length;
+            const avgPrice = count ? (properties.reduce((s, p) => s + p.price, 0) / count).toFixed(1) : '—';
+            const minPrice = count ? Math.min(...properties.map(p => p.price)) : '—';
+            const maxPrice = count ? Math.max(...properties.map(p => p.price)) : '—';
+            const favCount = properties.filter(p => p.favorite).length;
+
+            const ages = properties.map(houseAge).filter(a => a !== null);
+            const avgAge = ages.length ? (ages.reduce((s, a) => s + a, 0) / ages.length).toFixed(1) : '—';
+            const minAge = ages.length ? Math.min(...ages) : '—';
+            const maxAge = ages.length ? Math.max(...ages) : '—';
+
+            grid.innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">在看房源</div>
+                    <div class="kpi-value blue">${count}</div>
+                    <div class="kpi-sub">其中收藏 ${favCount} 套</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">均价</div>
+                    <div class="kpi-value violet">${avgPrice}<span style="font-size:14px;color:var(--text-muted)"> 万</span></div>
+                    <div class="kpi-sub">${minPrice}万 ~ ${maxPrice}万</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">平均房龄</div>
+                    <div class="kpi-value" style="color:${avgAge !== '—' ? ageColor(parseFloat(avgAge)) : 'var(--text-muted)'}">${avgAge}<span style="font-size:14px;color:var(--text-muted)"> 年</span></div>
+                    <div class="kpi-sub">${minAge}年 ~ ${maxAge}年</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">首付预算</div>
+                    <div class="kpi-value emerald">65<span style="font-size:14px;color:var(--text-muted)"> 万</span></div>
+                    <div class="kpi-sub">家里50 + 自己15</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">公积金贷款</div>
+                    <div class="kpi-value amber">100<span style="font-size:14px;color:var(--text-muted)"> 万</span></div>
+                    <div class="kpi-sub">夫妻双方 · 利率2.6%</div>
+                </div>
+            `;
+        }
+
+        // ===== Render Property Cards =====
+        function renderProperties() {
+            const grid = document.getElementById('propertyGrid');
+            if (properties.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🏠</div><p>还没有房源，点击右上角「添加房源」开始吧</p></div>`;
+                return;
+            }
+
+            // Sort
+            const sortVal = document.getElementById('sortSelect')?.value || 'default';
+            let sorted = properties.map((p, i) => ({ p, i }));
+            if (sortVal === 'price-asc') sorted.sort((a, b) => a.p.price - b.p.price);
+            else if (sortVal === 'price-desc') sorted.sort((a, b) => b.p.price - a.p.price);
+            else if (sortVal === 'unit-asc') sorted.sort((a, b) => unitPrice(a.p) - unitPrice(b.p));
+            else if (sortVal === 'unit-desc') sorted.sort((a, b) => unitPrice(b.p) - unitPrice(a.p));
+            else if (sortVal === 'area-desc') sorted.sort((a, b) => b.p.area - a.p.area);
+            else if (sortVal === 'age-asc') sorted.sort((a, b) => (houseAge(a.p) ?? 999) - (houseAge(b.p) ?? 999));
+            else if (sortVal === 'age-desc') sorted.sort((a, b) => (houseAge(b.p) ?? -1) - (houseAge(a.p) ?? -1));
+
+            grid.innerHTML = sorted.map(({ p, i }) => {
+                const age = houseAge(p);
+                const ageL = ageLabel(age);
+                return `
+                <div class="property-card ${p.favorite ? 'favorite' : ''}">
+                    <div class="card-header">
+                        <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <div class="card-name">${p.name}</div>
+                            ${age !== null ? `<span style="font-size:11px;padding:3px 10px;border-radius:100px;background:${ageColor(age)}22;border:1px solid ${ageColor(age)}44;color:${ageColor(age)};font-weight:600;white-space:nowrap;">${p.yearBuilt}年建 · 房龄${age}年 ${ageL}</span>` : ''}
+                        </div>
+                        <div class="card-actions">
+                            <button class="fav-btn ${p.favorite ? 'active' : ''}" onclick="toggleFav(${i})" title="收藏">${p.favorite ? '⭐' : '☆'}</button>
+                            <button class="fav-btn" onclick="editProperty(${i})" title="编辑">✏️</button>
+                            <button class="del-btn" onclick="deleteProperty(${i})" title="删除">🗑</button>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        ${p.layout ? `<span class="meta-tag">${p.layout}</span>` : ''}
+                        ${p.orientation ? `<span class="meta-tag">${p.orientation}</span>` : ''}
+                        ${p.floor ? `<span class="meta-tag">${p.floor}</span>` : ''}
+                        ${p.buildingType ? `<span class="meta-tag">${p.buildingType}</span>` : ''}
+                        ${p.decoration ? `<span class="meta-tag">${p.decoration}</span>` : ''}
+                        ${p.propertyYears && p.propertyYears !== 70 ? `<span class="meta-tag" style="color:var(--accent-amber)">${p.propertyYears}年产权</span>` : ''}
+                        ${(p.tags || []).map(t => `<span class="meta-tag highlight">${t}</span>`).join('')}
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat">
+                            <div class="stat-value price">${p.price}<span style="font-size:12px;font-weight:400">万</span></div>
+                            <div class="stat-label">总价</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value area">${p.area}<span style="font-size:12px;font-weight:400">㎡</span></div>
+                            <div class="stat-label">面积</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value unit-price">${formatMoney(unitPrice(p))}<span style="font-size:10px;font-weight:400">/㎡</span></div>
+                            <div class="stat-label">单价</div>
+                        </div>
+                    </div>
+                    ${p.metro ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">🚇 ${p.metro}</div>` : ''}
+                    <div class="card-rating">
+                        <span class="rating-label">位置</span>
+                        <div class="stars">${renderStars(i, 'location', p.ratings.location)}</div>
+                        <span class="rating-label" style="margin-left:8px;">性价比</span>
+                        <div class="stars">${renderStars(i, 'value', p.ratings.value)}</div>
+                    </div>
+                    <div class="card-notes">
+                        <textarea placeholder="看房笔记…" oninput="updateNotes(${i}, this.value)">${p.notes || ''}</textarea>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderStars(idx, dim, val) {
+            return [1, 2, 3, 4, 5].map(s =>
+                `<button class="star ${s <= val ? 'active' : ''}" onclick="setRating(${idx},'${dim}',${s})">★</button>`
+            ).join('');
+        }
+
+        async function setRating(idx, dim, val) {
+            const p = properties[idx];
+            const newVal = p.ratings[dim] === val ? 0 : val;
+            const ratings = { ...p.ratings, [dim]: newVal };
+            await api(`/properties/${p.id}`, { method: 'PUT', body: { ratings } });
+            p.ratings[dim] = newVal;
+            renderProperties();
+        }
+
+        let noteTimer = null;
+        function updateNotes(idx, val) {
+            properties[idx].notes = val;
+            clearTimeout(noteTimer);
+            noteTimer = setTimeout(() => {
+                api(`/properties/${properties[idx].id}`, { method: 'PUT', body: { notes: val } });
+            }, 500);
+        }
+
+        async function toggleFav(idx) {
+            const p = properties[idx];
+            const newVal = !p.favorite;
+            await api(`/properties/${p.id}`, { method: 'PUT', body: { favorite: newVal } });
+            p.favorite = newVal;
+            renderProperties();
+            renderKPIs();
+        }
+
+        async function deleteProperty(idx) {
+            if (!confirm(`确认删除「${properties[idx].name}」？`)) return;
+            await api(`/properties/${properties[idx].id}`, { method: 'DELETE' });
+            properties.splice(idx, 1);
+            renderAll();
+        }
+
+        // ===== Compare Table =====
+        function renderCompare() {
+            const table = document.getElementById('compareTable');
+            if (properties.length === 0) {
+                table.innerHTML = '<tr><td style="padding:40px;text-align:center;color:var(--text-muted)">暂无房源数据</td></tr>';
+                return;
+            }
+
+            const prices = properties.map(p => p.price);
+            const unitPrices = properties.map(p => unitPrice(p));
+            const areas = properties.map(p => p.area);
+            const minP = Math.min(...prices), maxP = Math.max(...prices);
+            const minU = Math.min(...unitPrices), maxU = Math.max(...unitPrices);
+
+            const downPayment = parseFloat(document.getElementById('calcDown')?.value) || 65;
+            const gjjLoan = parseFloat(document.getElementById('calcGjj')?.value) || 100;
+            const gjjRate = parseFloat(document.getElementById('calcGjjRate')?.value) || 2.6;
+            const bizRate = parseFloat(document.getElementById('calcBizRate')?.value) || 3.0;
+            const years = parseInt(document.getElementById('calcYears')?.value) || 30;
+
+            const ages = properties.map(houseAge);
+            const minAge = Math.min(...ages.filter(a => a !== null));
+            const maxAge = Math.max(...ages.filter(a => a !== null));
+
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>小区</th>
+                        <th>户型</th>
+                        <th>面积</th>
+                        <th>总价</th>
+                        <th>单价</th>
+                        <th>建造年份</th>
+                        <th>房龄</th>
+                        <th>建筑/装修</th>
+                        <th>首付65万后贷款</th>
+                        <th>月供估算</th>
+                        <th>位置评分</th>
+                        <th>性价比</th>
+                        <th>收藏</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${properties.map((p, i) => {
+                        const up = unitPrice(p);
+                        const age = ages[i];
+                        const totalLoan = p.price - downPayment;
+                        const bizLoan = Math.max(0, totalLoan - gjjLoan);
+                        const gjjActual = Math.min(totalLoan, gjjLoan);
+                        const mp = monthlyPayment(gjjActual, gjjRate, years) + monthlyPayment(bizLoan, bizRate, years);
+                        return `<tr>
+                            <td><strong>${p.name}</strong></td>
+                            <td>${p.layout || '—'}</td>
+                            <td>${p.area}㎡</td>
+                            <td class="${p.price === minP ? 'best' : p.price === maxP ? 'worst' : ''}">${p.price}万</td>
+                            <td class="${up === minU ? 'best' : up === maxU ? 'worst' : ''}">${formatMoney(up)}/㎡</td>
+                            <td>${p.yearBuilt || '—'}</td>
+                            <td style="color:${ageColor(age)}">${age !== null ? age + '年' : '—'}</td>
+                            <td>${p.buildingType || ''} ${p.decoration || ''}</td>
+                            <td>${totalLoan.toFixed(1)}万 <span style="font-size:11px;color:var(--text-muted)">(公${gjjActual.toFixed(0)}+商${bizLoan.toFixed(0)})</span></td>
+                            <td><strong>${formatMoney(Math.round(mp))}</strong>元/月</td>
+                            <td>${'★'.repeat(p.ratings.location)}${'☆'.repeat(5 - p.ratings.location)}</td>
+                            <td>${'★'.repeat(p.ratings.value)}${'☆'.repeat(5 - p.ratings.value)}</td>
+                            <td>${p.favorite ? '⭐' : ''}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            `;
+        }
+
+        // ===== Calculator =====
+        function calculate() {
+            const price = parseFloat(document.getElementById('calcPrice').value) || 0;
+            const down = parseFloat(document.getElementById('calcDown').value) || 0;
+            const gjj = parseFloat(document.getElementById('calcGjj').value) || 0;
+            const gjjRate = parseFloat(document.getElementById('calcGjjRate').value) || 0;
+            const bizRate = parseFloat(document.getElementById('calcBizRate').value) || 0;
+            const years = parseInt(document.getElementById('calcYears').value) || 30;
+
+            const totalLoan = Math.max(0, price - down);
+            const gjjActual = Math.min(totalLoan, gjj);
+            const bizLoan = Math.max(0, totalLoan - gjjActual);
+            const downRatio = price > 0 ? ((down / price) * 100).toFixed(1) : 0;
+
+            const gjjMonthly = monthlyPayment(gjjActual, gjjRate, years);
+            const bizMonthly = monthlyPayment(bizLoan, bizRate, years);
+            const totalMonthly = gjjMonthly + bizMonthly;
+
+            const totalInterest = totalMonthly * years * 12 - totalLoan * 10000;
+            const totalRepay = totalMonthly * years * 12;
+
+            // 税费估算：买方只承担契税 + 中介费
+            const area = parseFloat(document.getElementById('calcArea')?.value) || 0;
+            const taxRate = area > 90 ? 0.015 : 0.01; // 首套：≤90㎡ 1%，>90㎡ 1.5%
+            const tax = price * taxRate; // 契税（按挂牌价估算）
+            const agentFee = price * 0.012; // 买方中介费 1.2%
+            const totalExtra = tax + agentFee;
+
+            document.getElementById('calcResults').innerHTML = `
+                <div class="result-item">
+                    <div class="result-label">总贷款额</div>
+                    <div class="result-value">${totalLoan.toFixed(1)}<span style="font-size:12px">万</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">首付比例</div>
+                    <div class="result-value">${downRatio}<span style="font-size:12px">%</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">公积金贷款</div>
+                    <div class="result-value" style="color:var(--accent-blue)">${gjjActual.toFixed(1)}<span style="font-size:12px">万</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">商贷部分</div>
+                    <div class="result-value" style="color:var(--accent-violet)">${bizLoan.toFixed(1)}<span style="font-size:12px">万</span></div>
+                </div>
+                <div class="result-item" style="grid-column: span 2; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2);">
+                    <div class="result-label">每月还款总额</div>
+                    <div class="result-value highlight" style="font-size:28px">${formatMoney(Math.round(totalMonthly))}<span style="font-size:14px">元/月</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">月供(公积金)</div>
+                    <div class="result-value" style="font-size:16px">${formatMoney(Math.round(gjjMonthly))}<span style="font-size:11px">元</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">月供(商贷)</div>
+                    <div class="result-value" style="font-size:16px">${formatMoney(Math.round(bizMonthly))}<span style="font-size:11px">元</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">利息总额</div>
+                    <div class="result-value" style="font-size:16px;color:var(--accent-amber)">${(totalInterest / 10000).toFixed(1)}<span style="font-size:11px">万</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">还款总额</div>
+                    <div class="result-value" style="font-size:16px">${(totalRepay / 10000).toFixed(1)}<span style="font-size:11px">万</span></div>
+                </div>
+                <div class="result-item" style="grid-column: span 2;">
+                    <div class="result-label">契税 + 中介费（买方）</div>
+                    <div class="result-value" style="font-size:16px;color:var(--accent-rose)">≈${totalExtra.toFixed(1)}<span style="font-size:11px">万</span></div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">契税 ${tax.toFixed(1)}万（${area}㎡，${(taxRate*100).toFixed(0)}%）+ 中介费 ${agentFee.toFixed(1)}万（1.2%）</div>
+                </div>
+            `;
+        }
+
+        // ===== Checklist =====
+        function renderChecklist() {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = checklist.map((section, si) => `
+                <div class="checklist-section">
+                    <h3>${section.title}
+                        <span style="font-size:12px;color:var(--text-muted);font-weight:400;margin-left:auto">
+                            ${section.items.filter(it => it.done).length}/${section.items.length}
+                        </span>
+                    </h3>
+                    ${section.items.map((item, ii) => `
+                        <div class="check-item ${item.done ? 'done' : ''}">
+                            <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleCheck(${si}, ${ii})">
+                            <label onclick="toggleCheck(${si}, ${ii})">${item.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        async function toggleCheck(si, ii) {
+            const item = checklist[si].items[ii];
+            const newDone = !item.done;
+            await api(`/checklist/items/${item.id}`, { method: 'PUT', body: { done: newDone } });
+            item.done = newDone;
+            renderChecklist();
+        }
+
+        // ===== Timeline =====
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            if (timeline.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>记录你的买房历程吧</p></div>';
+                return;
+            }
+            container.innerHTML = timeline.slice().reverse().map(t => `
+                <div class="timeline-item">
+                    <button class="timeline-delete" onclick="deleteTimeline(${t.id})" title="删除">🗑</button>
+                    <div class="timeline-date">${t.date}</div>
+                    <div class="timeline-title">${t.title}</div>
+                    <div class="timeline-content">${t.content}</div>
+                </div>
+            `).join('');
+        }
+
+        async function addTimeline() {
+            const input = document.getElementById('timelineInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            const sep = text.indexOf('：') > -1 ? '：' : ':';
+            const parts = text.split(sep);
+            const title = parts.length > 1 ? parts[0].trim() : '记录';
+            const content = parts.length > 1 ? parts.slice(1).join(sep).trim() : text;
+
+            const item = await api('/timeline', { method: 'POST', body: { date, title, content } });
+            timeline.unshift(item);
+            renderTimeline();
+            input.value = '';
+        }
+
+        async function deleteTimeline(id) {
+            if (!confirm('确认删除这条记录？')) return;
+            await api(`/timeline/${id}`, { method: 'DELETE' });
+            timeline = timeline.filter(t => t.id !== id);
+            renderTimeline();
+        }
+
+        // ===== Modal =====
+        function openAddModal() {
+            document.getElementById('editIndex').value = -1;
+            document.getElementById('modalTitle').textContent = '添加房源';
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputLayout').value = '';
+            document.getElementById('inputArea').value = '';
+            document.getElementById('inputPrice').value = '';
+            document.getElementById('inputOrientation').value = '';
+            document.getElementById('inputFloor').value = '';
+            document.getElementById('inputYearBuilt').value = '';
+            document.getElementById('inputPropertyYears').value = '70';
+            document.getElementById('inputDecoration').value = '';
+            document.getElementById('inputBuildingType').value = '';
+            document.getElementById('inputMetro').value = '';
+            document.getElementById('inputTags').value = '';
+            document.getElementById('inputNotes').value = '';
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function editProperty(idx) {
+            const p = properties[idx];
+            document.getElementById('editIndex').value = idx;
+            document.getElementById('modalTitle').textContent = '编辑房源';
+            document.getElementById('inputName').value = p.name;
+            document.getElementById('inputLayout').value = p.layout || '';
+            document.getElementById('inputArea').value = p.area || '';
+            document.getElementById('inputPrice').value = p.price || '';
+            document.getElementById('inputOrientation').value = p.orientation || '';
+            document.getElementById('inputFloor').value = p.floor || '';
+            document.getElementById('inputYearBuilt').value = p.yearBuilt || '';
+            document.getElementById('inputPropertyYears').value = p.propertyYears || 70;
+            document.getElementById('inputDecoration').value = p.decoration || '';
+            document.getElementById('inputBuildingType').value = p.buildingType || '';
+            document.getElementById('inputMetro').value = p.metro || '';
+            document.getElementById('inputTags').value = (p.tags || []).join(', ');
+            document.getElementById('inputNotes').value = p.notes || '';
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        async function saveProperty() {
+            const name = document.getElementById('inputName').value.trim();
+            const price = parseFloat(document.getElementById('inputPrice').value);
+
+            if (!name) { alert('请输入小区名称'); return; }
+            if (isNaN(price) || price <= 0) { alert('请输入有效总价'); return; }
+
+            const editIdx = parseInt(document.getElementById('editIndex').value);
+            const tagStr = document.getElementById('inputTags').value;
+            const tags = tagStr ? tagStr.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+
+            const prop = {
+                name,
+                layout: document.getElementById('inputLayout').value.trim(),
+                area: parseFloat(document.getElementById('inputArea').value) || 0,
+                price,
+                orientation: document.getElementById('inputOrientation').value.trim(),
+                floor: document.getElementById('inputFloor').value.trim(),
+                metro: document.getElementById('inputMetro').value.trim(),
+                yearBuilt: parseInt(document.getElementById('inputYearBuilt').value) || null,
+                propertyYears: parseInt(document.getElementById('inputPropertyYears').value) || 70,
+                decoration: document.getElementById('inputDecoration').value || '',
+                buildingType: document.getElementById('inputBuildingType').value || '',
+                tags,
+                notes: document.getElementById('inputNotes').value.trim()
+            };
+
+            if (editIdx >= 0) {
+                const updated = await api(`/properties/${properties[editIdx].id}`, { method: 'PUT', body: prop });
+                properties[editIdx] = updated;
+            } else {
+                const created = await api('/properties', { method: 'POST', body: prop });
+                properties.push(created);
+            }
+
+            closeAddModal();
+            renderAll();
+        }
+
+        // ===== Tabs =====
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Lazy render some tabs
+            if (tabId === 'compare') renderCompare();
+            if (tabId === 'calculator') calculate();
+        }
+
+        // ===== Import / Export =====
+        async function exportData() {
+            try {
+                const data = await api('/export');
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `买房数据_${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                showToast('⚠️ 导出失败');
+            }
+        }
+
+        function importData() {
+            if (!confirm('导入会覆盖全部现有数据，确认继续？')) return;
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    if (!data.properties || !Array.isArray(data.properties)) {
+                        showToast('⚠️ 文件格式错误：缺少 properties 数组');
+                        return;
+                    }
+                    await api('/import', { method: 'POST', body: data });
+                    await loadData();
+                    renderAll();
+                    showToast('✅ 导入成功！');
+                } catch (err) {
+                    showToast('⚠️ 导入失败，请检查文件格式');
+                }
+            };
+            input.click();
+        }
+
+        // ===== Toast =====
+        function showToast(msg) {
+            const el = document.createElement('div');
+            el.textContent = msg;
+            el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 24px;background:var(--bg-secondary);border:1px solid var(--border-glass);border-radius:var(--radius-md);color:var(--text-primary);font-size:14px;z-index:9999;animation:fadeIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4);';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+
+        // ===== Render All =====
+        function renderAll() {
+            renderKPIs();
+            renderProperties();
+            renderChecklist();
+            renderTimeline();
+        }
+
+        // ===== Init =====
+        (async () => {
+            await loadData();
+            renderAll();
+            calculate();
+        })();
+
+        // Close modal on overlay click
+        document.getElementById('addModal').addEventListener('click', function (e) {
+            if (e.target === this) closeAddModal();
+        });
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeAddModal();
+        });
+    </script>
+</body>
+</html>
