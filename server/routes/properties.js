@@ -18,10 +18,10 @@ router.post('/', (req, res) => {
   const params = propertyToParams(p);
   const info = db.prepare(`
     INSERT INTO properties (name, layout, area, price, orientation, floor, metro,
-      year_built, property_years, decoration, building_type, tags, notes, favorite,
+      year_built, property_years, decoration, building_type, property_type, tags, notes, favorite,
       rating_location, rating_quality, rating_value, added_date)
     VALUES (@name, @layout, @area, @price, @orientation, @floor, @metro,
-      @year_built, @property_years, @decoration, @building_type, @tags, @notes, @favorite,
+      @year_built, @property_years, @decoration, @building_type, @property_type, @tags, @notes, @favorite,
       @rating_location, @rating_quality, @rating_value, @added_date)
   `).run(params);
 
@@ -44,6 +44,7 @@ router.put('/:id', (req, res) => {
       orientation = @orientation, floor = @floor, metro = @metro,
       year_built = @year_built, property_years = @property_years,
       decoration = @decoration, building_type = @building_type,
+      property_type = @property_type,
       tags = @tags, notes = @notes, favorite = @favorite,
       rating_location = @rating_location, rating_quality = @rating_quality,
       rating_value = @rating_value, added_date = @added_date,

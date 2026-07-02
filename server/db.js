@@ -24,6 +24,7 @@ function initSchema() {
       property_years INTEGER DEFAULT 70,
       decoration TEXT,
       building_type TEXT,
+      property_type TEXT DEFAULT '二手房',
       tags TEXT,
       notes TEXT,
       favorite INTEGER DEFAULT 0,
@@ -34,7 +35,15 @@ function initSchema() {
       created_at TEXT DEFAULT (datetime('now','localtime')),
       updated_at TEXT DEFAULT (datetime('now','localtime'))
     );
+  `);
 
+  try {
+    db.exec("ALTER TABLE properties ADD COLUMN property_type TEXT DEFAULT '二手房'");
+  } catch (e) {
+    // Column might already exist
+  }
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS checklist_sections (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -68,10 +77,10 @@ function seedIfEmpty() {
 
   const insertProp = db.prepare(`
     INSERT INTO properties (name, layout, area, price, orientation, floor, metro,
-      year_built, property_years, decoration, building_type, tags, notes, favorite,
+      year_built, property_years, decoration, building_type, property_type, tags, notes, favorite,
       rating_location, rating_quality, rating_value, added_date)
     VALUES (@name, @layout, @area, @price, @orientation, @floor, @metro,
-      @year_built, @property_years, @decoration, @building_type, @tags, @notes, @favorite,
+      @year_built, @property_years, @decoration, @building_type, @property_type, @tags, @notes, @favorite,
       @rating_location, @rating_quality, @rating_value, @added_date)
   `);
 
@@ -214,6 +223,7 @@ function rowToProperty(row) {
     propertyYears: row.property_years,
     decoration: row.decoration,
     buildingType: row.building_type,
+    propertyType: row.property_type || '二手房',
     tags: row.tags ? JSON.parse(row.tags) : [],
     notes: row.notes,
     favorite: !!row.favorite,
@@ -239,6 +249,7 @@ function propertyToParams(p) {
     property_years: p.propertyYears || 70,
     decoration: p.decoration || '',
     building_type: p.buildingType || '',
+    property_type: p.propertyType || '二手房',
     tags: JSON.stringify(p.tags || []),
     notes: p.notes || '',
     favorite: p.favorite ? 1 : 0,

@@ -983,7 +983,6 @@
             <button class="tab active" data-tab="properties" onclick="switchTab('properties')">🏘️ 房源</button>
             <button class="tab" data-tab="compare" onclick="switchTab('compare')">📊 对比</button>
             <button class="tab" data-tab="calculator" onclick="switchTab('calculator')">🧮 月供计算</button>
-            <button class="tab" data-tab="checklist" onclick="switchTab('checklist')">✅ 看房清单</button>
             <button class="tab" data-tab="timeline" onclick="switchTab('timeline')">📅 时间线</button>
         </div>
 
@@ -1058,6 +1057,13 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>还款方式</label>
+                        <select id="calcMethod" onchange="calculate()">
+                            <option value="1" selected>等额本息</option>
+                            <option value="2">等额本金</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>建筑面积（㎡）<span style="color:var(--text-muted);font-weight:400"> — 用于契税计算</span></label>
                         <input type="number" id="calcArea" value="91" oninput="calculate()">
                     </div>
@@ -1068,13 +1074,6 @@
                         <!-- Rendered by JS -->
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Tab: Checklist -->
-        <div class="tab-content" id="tab-checklist">
-            <div class="checklist" id="checklistContainer">
-                <!-- Rendered by JS -->
             </div>
         </div>
 
@@ -1136,15 +1135,23 @@
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 <div class="form-group">
+                    <label>房源类型</label>
+                    <select id="inputPropertyType">
+                        <option value="二手房" selected>二手房</option>
+                        <option value="新房">新房</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>装修状态</label>
                     <select id="inputDecoration">
                         <option value="">请选择</option>
                         <option value="毛坯">毛坯</option>
                         <option value="简装">简装</option>
                         <option value="精装">精装</option>
-                        <option value="豪装">豪装</option>
                     </select>
                 </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 <div class="form-group">
                     <label>建筑类型</label>
                     <select id="inputBuildingType">
@@ -1154,10 +1161,10 @@
                         <option value="板塔结合">板塔结合</option>
                     </select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>最近地铁站</label>
-                <input type="text" id="inputMetro" placeholder="如：3号线 九龙湖站 780m">
+                <div class="form-group">
+                    <label>最近地铁站</label>
+                    <input type="text" id="inputMetro" placeholder="如：3号线 九龙湖站 780m">
+                </div>
             </div>
             <div class="form-group">
                 <label>标签（逗号分隔）</label>
@@ -1329,6 +1336,7 @@
                         ${p.layout ? `<span class="meta-tag">${p.layout}</span>` : ''}
                         ${p.orientation ? `<span class="meta-tag">${p.orientation}</span>` : ''}
                         ${p.floor ? `<span class="meta-tag">${p.floor}</span>` : ''}
+                        ${p.propertyType ? `<span class="meta-tag highlight" style="${p.propertyType === '新房' ? 'background:rgba(16,185,129,0.1);color:var(--accent-emerald);border-color:rgba(16,185,129,0.2);' : ''}">${p.propertyType}</span>` : ''}
                         ${p.buildingType ? `<span class="meta-tag">${p.buildingType}</span>` : ''}
                         ${p.decoration ? `<span class="meta-tag">${p.decoration}</span>` : ''}
                         ${p.propertyYears && p.propertyYears !== 70 ? `<span class="meta-tag" style="color:var(--accent-amber)">${p.propertyYears}年产权</span>` : ''}
@@ -1436,7 +1444,7 @@
                         <th>单价</th>
                         <th>建造年份</th>
                         <th>房龄</th>
-                        <th>建筑/装修</th>
+                        <th>类型/建筑/装修</th>
                         <th>首付65万后贷款</th>
                         <th>月供估算</th>
                         <th>位置评分</th>
@@ -1460,7 +1468,7 @@
                             <td class="${up === minU ? 'best' : up === maxU ? 'worst' : ''}">${formatMoney(up)}/㎡</td>
                             <td>${p.yearBuilt || '—'}</td>
                             <td style="color:${ageColor(age)}">${age !== null ? age + '年' : '—'}</td>
-                            <td>${p.buildingType || ''} ${p.decoration || ''}</td>
+                            <td>${p.propertyType || ''} ${p.buildingType || ''} ${p.decoration || ''}</td>
                             <td>${totalLoan.toFixed(1)}万 <span style="font-size:11px;color:var(--text-muted)">(公${gjjActual.toFixed(0)}+商${bizLoan.toFixed(0)})</span></td>
                             <td><strong>${formatMoney(Math.round(mp))}</strong>元/月</td>
                             <td>${'★'.repeat(p.ratings.location)}${'☆'.repeat(5 - p.ratings.location)}</td>
@@ -1480,22 +1488,59 @@
             const gjjRate = parseFloat(document.getElementById('calcGjjRate').value) || 0;
             const bizRate = parseFloat(document.getElementById('calcBizRate').value) || 0;
             const years = parseInt(document.getElementById('calcYears').value) || 30;
+            const method = document.getElementById('calcMethod')?.value || '1'; // 1: 等额本息, 2: 等额本金
 
             const totalLoan = Math.max(0, price - down);
             const gjjActual = Math.min(totalLoan, gjj);
             const bizLoan = Math.max(0, totalLoan - gjjActual);
             const downRatio = price > 0 ? ((down / price) * 100).toFixed(1) : 0;
 
-            const gjjMonthly = monthlyPayment(gjjActual, gjjRate, years);
-            const bizMonthly = monthlyPayment(bizLoan, bizRate, years);
-            const totalMonthly = gjjMonthly + bizMonthly;
+            let gjjMonthlyText, bizMonthlyText, totalMonthlyText;
+            let totalInterest = 0;
+            let totalRepay = 0;
 
-            const totalInterest = totalMonthly * years * 12 - totalLoan * 10000;
-            const totalRepay = totalMonthly * years * 12;
+            if (method === '1') {
+                // 等额本息
+                const gjjMonthly = monthlyPayment(gjjActual, gjjRate, years);
+                const bizMonthly = monthlyPayment(bizLoan, bizRate, years);
+                const totalMonthly = gjjMonthly + bizMonthly;
+
+                totalInterest = totalMonthly * years * 12 - totalLoan * 10000;
+                totalRepay = totalMonthly * years * 12;
+
+                totalMonthlyText = `<div class="result-value highlight" style="font-size:28px">${formatMoney(Math.round(totalMonthly))}<span style="font-size:14px">元/月</span></div>`;
+                gjjMonthlyText = `${formatMoney(Math.round(gjjMonthly))}<span style="font-size:11px">元</span>`;
+                bizMonthlyText = `${formatMoney(Math.round(bizMonthly))}<span style="font-size:11px">元</span>`;
+            } else {
+                // 等额本金
+                const n = years * 12;
+                
+                const gjjPrincipalMonthly = gjjActual > 0 ? gjjActual * 10000 / n : 0;
+                const gjjFirstInterest = gjjActual > 0 ? gjjActual * 10000 * (gjjRate / 100 / 12) : 0;
+                const gjjFirstMonth = gjjPrincipalMonthly + gjjFirstInterest;
+                const gjjDecrease = gjjPrincipalMonthly * (gjjRate / 100 / 12);
+                const gjjTotalInterest = gjjActual > 0 ? (gjjActual * 10000 * (gjjRate / 100 / 12) * (n + 1)) / 2 : 0;
+
+                const bizPrincipalMonthly = bizLoan > 0 ? bizLoan * 10000 / n : 0;
+                const bizFirstInterest = bizLoan > 0 ? bizLoan * 10000 * (bizRate / 100 / 12) : 0;
+                const bizFirstMonth = bizPrincipalMonthly + bizFirstInterest;
+                const bizDecrease = bizPrincipalMonthly * (bizRate / 100 / 12);
+                const bizTotalInterest = bizLoan > 0 ? (bizLoan * 10000 * (bizRate / 100 / 12) * (n + 1)) / 2 : 0;
+
+                totalInterest = gjjTotalInterest + bizTotalInterest;
+                totalRepay = totalLoan * 10000 + totalInterest;
+
+                const totalFirstMonth = gjjFirstMonth + bizFirstMonth;
+                const totalDecrease = gjjDecrease + bizDecrease;
+
+                totalMonthlyText = `<div class="result-value highlight" style="font-size:24px">首月 ${formatMoney(Math.round(totalFirstMonth))}<span style="font-size:14px">元</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">每月递减 ${totalDecrease.toFixed(2)} 元</div>`;
+                gjjMonthlyText = `首月 ${formatMoney(Math.round(gjjFirstMonth))}<span style="font-size:11px">元</span>`;
+                bizMonthlyText = `首月 ${formatMoney(Math.round(bizFirstMonth))}<span style="font-size:11px">元</span>`;
+            }
 
             // 税费估算：买方只承担契税 + 中介费
             const area = parseFloat(document.getElementById('calcArea')?.value) || 0;
-            const taxRate = area > 90 ? 0.015 : 0.01; // 首套：≤90㎡ 1%，>90㎡ 1.5%
+            const taxRate = area > 140 ? 0.015 : 0.01; // 首套：≤140㎡ 1%，>140㎡ 1.5%
             const tax = price * taxRate; // 契税（按挂牌价估算）
             const agentFee = price * 0.012; // 买方中介费 1.2%
             const totalExtra = tax + agentFee;
@@ -1519,15 +1564,15 @@
                 </div>
                 <div class="result-item" style="grid-column: span 2; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2);">
                     <div class="result-label">每月还款总额</div>
-                    <div class="result-value highlight" style="font-size:28px">${formatMoney(Math.round(totalMonthly))}<span style="font-size:14px">元/月</span></div>
+                    ${totalMonthlyText}
                 </div>
                 <div class="result-item">
                     <div class="result-label">月供(公积金)</div>
-                    <div class="result-value" style="font-size:16px">${formatMoney(Math.round(gjjMonthly))}<span style="font-size:11px">元</span></div>
+                    <div class="result-value" style="font-size:14px">${gjjMonthlyText}</div>
                 </div>
                 <div class="result-item">
                     <div class="result-label">月供(商贷)</div>
-                    <div class="result-value" style="font-size:16px">${formatMoney(Math.round(bizMonthly))}<span style="font-size:11px">元</span></div>
+                    <div class="result-value" style="font-size:14px">${bizMonthlyText}</div>
                 </div>
                 <div class="result-item">
                     <div class="result-label">利息总额</div>
@@ -1543,34 +1588,6 @@
                     <div style="font-size:11px;color:var(--text-muted);margin-top:4px">契税 ${tax.toFixed(1)}万（${area}㎡，${(taxRate*100).toFixed(0)}%）+ 中介费 ${agentFee.toFixed(1)}万（1.2%）</div>
                 </div>
             `;
-        }
-
-        // ===== Checklist =====
-        function renderChecklist() {
-            const container = document.getElementById('checklistContainer');
-            container.innerHTML = checklist.map((section, si) => `
-                <div class="checklist-section">
-                    <h3>${section.title}
-                        <span style="font-size:12px;color:var(--text-muted);font-weight:400;margin-left:auto">
-                            ${section.items.filter(it => it.done).length}/${section.items.length}
-                        </span>
-                    </h3>
-                    ${section.items.map((item, ii) => `
-                        <div class="check-item ${item.done ? 'done' : ''}">
-                            <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleCheck(${si}, ${ii})">
-                            <label onclick="toggleCheck(${si}, ${ii})">${item.text}</label>
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('');
-        }
-
-        async function toggleCheck(si, ii) {
-            const item = checklist[si].items[ii];
-            const newDone = !item.done;
-            await api(`/checklist/items/${item.id}`, { method: 'PUT', body: { done: newDone } });
-            item.done = newDone;
-            renderChecklist();
         }
 
         // ===== Timeline =====
@@ -1648,6 +1665,7 @@
             document.getElementById('inputFloor').value = p.floor || '';
             document.getElementById('inputYearBuilt').value = p.yearBuilt || '';
             document.getElementById('inputPropertyYears').value = p.propertyYears || 70;
+            document.getElementById('inputPropertyType').value = p.propertyType || '二手房';
             document.getElementById('inputDecoration').value = p.decoration || '';
             document.getElementById('inputBuildingType').value = p.buildingType || '';
             document.getElementById('inputMetro').value = p.metro || '';
@@ -1681,6 +1699,7 @@
                 metro: document.getElementById('inputMetro').value.trim(),
                 yearBuilt: parseInt(document.getElementById('inputYearBuilt').value) || null,
                 propertyYears: parseInt(document.getElementById('inputPropertyYears').value) || 70,
+                propertyType: document.getElementById('inputPropertyType').value || '二手房',
                 decoration: document.getElementById('inputDecoration').value || '',
                 buildingType: document.getElementById('inputBuildingType').value || '',
                 tags,
@@ -1766,7 +1785,6 @@
         function renderAll() {
             renderKPIs();
             renderProperties();
-            renderChecklist();
             renderTimeline();
         }
 

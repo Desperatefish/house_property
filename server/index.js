@@ -44,9 +44,9 @@ app.post('/api/import', (req, res) => {
   try {
     const insertProp = db.prepare(`
       INSERT INTO properties (name, layout, area, price, orientation, floor, metro,
-        year_built, property_years, decoration, building_type, tags, notes, favorite,
+        year_built, property_years, decoration, building_type, property_type, tags, notes, favorite,
         rating_location, rating_quality, rating_value, added_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertSection = db.prepare('INSERT INTO checklist_sections (title, sort_order) VALUES (?, ?)');
@@ -67,6 +67,7 @@ app.post('/api/import', (req, res) => {
           p.yearBuilt || p.year_built || null,
           p.propertyYears || p.property_years || 70,
           p.decoration || '', p.buildingType || p.building_type || '',
+          p.propertyType || p.property_type || '二手房',
           typeof p.tags === 'string' ? p.tags : JSON.stringify(p.tags || []),
           p.notes || '', p.favorite ? 1 : 0,
           p.ratings?.location || p.rating_location || 0,
