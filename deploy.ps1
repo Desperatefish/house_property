@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 # ── 配置 ──────────────────────────────────────────────
 $SERVER     = "ubuntu@217.142.237.36"
 $SSH_KEY    = "$HOME\OneDrive\oracle\ssh-key-2C12G.key"
-$REMOTE_DIR = "/home/ubuntu/house-board"  # 和你另一个项目保持在 ubuntu 用户的 home 目录下
+$REMOTE_DIR = "/home/ubuntu/house"  # 和你另一个项目保持在 ubuntu 用户的 home 目录下
 
 # SSH 命令封装
 function Invoke-Remote {
