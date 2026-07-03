@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 # ── 配置 ──────────────────────────────────────────────
 $SERVER     = "ubuntu@217.142.237.36"
 $SSH_KEY    = "$HOME\OneDrive\oracle\ssh-key-2C12G.key"
-$REMOTE_DIR = "/home/ubuntu/house"  # 和你另一个项目保持在 ubuntu 用户的 home 目录下
+$REMOTE_DIR = "/home/ubuntu/house_property"  # 和你另一个项目保持在 ubuntu 用户的 home 目录下
 
 # SSH 命令封装
 function Invoke-Remote {
@@ -60,7 +60,7 @@ if ($Build) {
 
 # ── 验证 ──────────────────────────────────────────────
 Write-Host "`n验证容器状态..." -ForegroundColor Cyan
-Invoke-Remote "sudo docker ps --filter name=house-board --format 'table {{.Names}}\`t{{.Status}}\`t{{.Ports}}'"
+Invoke-Remote "sudo docker ps --filter name=house_property --format 'table {{.Names}}\`t{{.Status}}\`t{{.Ports}}'"
 
 Write-Host "`n部署完成!" -ForegroundColor Green
 Write-Host "  看板访问地址: 你在 Cloudflare / OpenResty 配置的域名" -ForegroundColor Green

@@ -1,5 +1,5 @@
 {
-  "name": "house-decision-board",
+  "name": "house-property",
   "version": "2.0.0",
   "description": "买房决策看板 · 南京",
   "main": "server/index.js",
