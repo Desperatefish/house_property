@@ -35,4 +35,20 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// PUT /api/timeline/:id - 更新记录
+router.put('/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { date, title, content } = req.body;
+  if (!content) return res.status(400).json({ error: '内容不能为空' });
+
+  const d = date || new Date().toISOString().slice(0, 10);
+  const t = title || '记录';
+
+  const info = db.prepare('UPDATE timeline SET date = ?, title = ?, content = ? WHERE id = ?').run(d, t, content, id);
+  if (info.changes === 0) return res.status(404).json({ error: '记录不存在' });
+
+  const row = db.prepare('SELECT * FROM timeline WHERE id = ?').get(id);
+  res.json({ id: row.id, date: row.date, title: row.title, content: row.content });
+});
+
 module.exports = router;

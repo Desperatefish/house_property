@@ -1,7 +1,7 @@
 {
   "name": "house-decision-board",
   "version": "2.0.0",
-  "description": "买房决策看板 · 南京江宁",
+  "description": "买房决策看板 · 南京",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>买房决策看板 · 南京江宁</title>
-    <meta name="description" content="南京江宁买房决策跟踪看板，房源对比、财务测算、看房笔记">
+    <title>买房决策看板 · 南京</title>
+    <meta name="description" content="南京买房决策跟踪看板，房源对比、财务测算、看房笔记">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="买房看板">
@@ -442,47 +442,6 @@
             margin-top: 2px;
         }
 
-        /* Rating Stars */
-        .card-rating {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            padding: 12px;
-            background: var(--bg-glass);
-            border-radius: var(--radius-sm);
-        }
-
-        .rating-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            min-width: 55px;
-        }
-
-        .stars {
-            display: flex;
-            gap: 4px;
-        }
-
-        .star {
-            width: 24px;
-            height: 24px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 16px;
-            transition: var(--transition);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .star:hover, .star.active {
-            color: var(--accent-amber);
-            transform: scale(1.15);
-        }
 
         /* Notes */
         .card-notes {
@@ -946,7 +905,7 @@
             .property-card { padding: 18px; }
             .card-stats { gap: 8px; }
             .stat-value { font-size: 16px; }
-            .card-rating { flex-wrap: wrap; gap: 8px; }
+
             .modal { width: 95%; padding: 24px 20px; }
             .modal h2 { font-size: 16px; }
             .btn { padding: 8px 14px; font-size: 12px; }
@@ -963,7 +922,7 @@
                 <div class="logo">🏠</div>
                 <div>
                     <h1>买房决策看板</h1>
-                    <div class="header-subtitle">南京 · 江宁核心区 · 2026</div>
+                    <div class="header-subtitle">南京</div>
                 </div>
             </div>
             <div class="header-actions">
@@ -1032,19 +991,19 @@
                     </div>
                     <div class="form-group">
                         <label>首付金额（万元）</label>
-                        <input type="number" id="calcDown" value="65" oninput="calculate()">
+                        <input type="number" id="calcDown" value="65" oninput="syncBudgets('calcDown')">
                     </div>
                     <div class="form-group">
                         <label>公积金贷款（万元）</label>
-                        <input type="number" id="calcGjj" value="100" oninput="calculate()">
+                        <input type="number" id="calcGjj" value="100" oninput="syncBudgets('calcGjj')">
                     </div>
                     <div class="form-group">
                         <label>公积金利率（%）</label>
-                        <input type="number" id="calcGjjRate" value="2.6" step="0.1" oninput="calculate()">
+                        <input type="number" id="calcGjjRate" value="2.6" step="0.1" oninput="syncRate('calcGjjRate')">
                     </div>
                     <div class="form-group">
                         <label>商贷利率（%）</label>
-                        <input type="number" id="calcBizRate" value="3.0" step="0.1" oninput="calculate()">
+                        <input type="number" id="calcBizRate" value="3.0" step="0.1" oninput="syncRate('calcBizRate')">
                     </div>
                     <div class="form-group">
                         <label>贷款年限</label>
@@ -1082,7 +1041,7 @@
             <div style="max-width:700px;">
                 <div class="timeline-input">
                     <input type="text" id="timelineInput" placeholder="记录一条买房动态…" onkeypress="if(event.key==='Enter')addTimeline()">
-                    <button class="btn btn-primary" onclick="addTimeline()">记录</button>
+                    <button class="btn btn-primary" id="timelineSubmitBtn" onclick="addTimeline()">记录</button>
                 </div>
                 <div class="timeline" id="timelineContainer">
                     <!-- Rendered by JS -->
@@ -1268,6 +1227,16 @@
             const minAge = ages.length ? Math.min(...ages) : '—';
             const maxAge = ages.length ? Math.max(...ages) : '—';
 
+            const downVal = localStorage.getItem('budgetDown') || 65;
+            const gjjVal = localStorage.getItem('budgetGjj') || 100;
+            if (!window.budgetInitialized) {
+                const cDown = document.getElementById('calcDown');
+                const cGjj = document.getElementById('calcGjj');
+                if (cDown) cDown.value = downVal;
+                if (cGjj) cGjj.value = gjjVal;
+                window.budgetInitialized = true;
+            }
+
             grid.innerHTML = `
                 <div class="kpi-card">
                     <div class="kpi-label">在看房源</div>
@@ -1285,14 +1254,18 @@
                     <div class="kpi-sub">${minAge}年 ~ ${maxAge}年</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">首付预算</div>
-                    <div class="kpi-value emerald">65<span style="font-size:14px;color:var(--text-muted)"> 万</span></div>
-                    <div class="kpi-sub">家里50 + 自己15</div>
+                    <div class="kpi-label">首付预算 <span style="font-size:10px;font-weight:normal;color:#999;cursor:help" title="点击下方数字直接修改">✎</span></div>
+                    <div class="kpi-value emerald">
+                        <input type="number" id="kpiDown" value="${downVal}" onchange="syncBudgets('down')" style="width: 60px; background: transparent; border: none; border-bottom: 1px dashed currentColor; color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; outline: none; text-align: center;">
+                        <span style="font-size:14px;color:var(--text-muted)"> 万</span>
+                    </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">公积金贷款</div>
-                    <div class="kpi-value amber">100<span style="font-size:14px;color:var(--text-muted)"> 万</span></div>
-                    <div class="kpi-sub">夫妻双方 · 利率2.6%</div>
+                    <div class="kpi-label">公积金贷款 <span style="font-size:10px;font-weight:normal;color:#999;cursor:help" title="点击下方数字直接修改">✎</span></div>
+                    <div class="kpi-value amber">
+                        <input type="number" id="kpiGjj" value="${gjjVal}" onchange="syncBudgets('gjj')" style="width: 60px; background: transparent; border: none; border-bottom: 1px dashed currentColor; color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; outline: none; text-align: center;">
+                        <span style="font-size:14px;color:var(--text-muted)"> 万</span>
+                    </div>
                 </div>
             `;
         }
@@ -1357,32 +1330,12 @@
                         </div>
                     </div>
                     ${p.metro ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">🚇 ${p.metro}</div>` : ''}
-                    <div class="card-rating">
-                        <span class="rating-label">位置</span>
-                        <div class="stars">${renderStars(i, 'location', p.ratings.location)}</div>
-                        <span class="rating-label" style="margin-left:8px;">性价比</span>
-                        <div class="stars">${renderStars(i, 'value', p.ratings.value)}</div>
-                    </div>
+
                     <div class="card-notes">
                         <textarea placeholder="看房笔记…" oninput="updateNotes(${i}, this.value)">${p.notes || ''}</textarea>
                     </div>
                 </div>`;
             }).join('');
-        }
-
-        function renderStars(idx, dim, val) {
-            return [1, 2, 3, 4, 5].map(s =>
-                `<button class="star ${s <= val ? 'active' : ''}" onclick="setRating(${idx},'${dim}',${s})">★</button>`
-            ).join('');
-        }
-
-        async function setRating(idx, dim, val) {
-            const p = properties[idx];
-            const newVal = p.ratings[dim] === val ? 0 : val;
-            const ratings = { ...p.ratings, [dim]: newVal };
-            await api(`/properties/${p.id}`, { method: 'PUT', body: { ratings } });
-            p.ratings[dim] = newVal;
-            renderProperties();
         }
 
         let noteTimer = null;
@@ -1445,10 +1398,8 @@
                         <th>建造年份</th>
                         <th>房龄</th>
                         <th>类型/建筑/装修</th>
-                        <th>首付65万后贷款</th>
+                        <th>首付${downPayment}万后贷款</th>
                         <th>月供估算</th>
-                        <th>位置评分</th>
-                        <th>性价比</th>
                         <th>收藏</th>
                     </tr>
                 </thead>
@@ -1456,7 +1407,7 @@
                     ${properties.map((p, i) => {
                         const up = unitPrice(p);
                         const age = ages[i];
-                        const totalLoan = p.price - downPayment;
+                        const totalLoan = Math.max(0, p.price - downPayment);
                         const bizLoan = Math.max(0, totalLoan - gjjLoan);
                         const gjjActual = Math.min(totalLoan, gjjLoan);
                         const mp = monthlyPayment(gjjActual, gjjRate, years) + monthlyPayment(bizLoan, bizRate, years);
@@ -1471,13 +1422,42 @@
                             <td>${p.propertyType || ''} ${p.buildingType || ''} ${p.decoration || ''}</td>
                             <td>${totalLoan.toFixed(1)}万 <span style="font-size:11px;color:var(--text-muted)">(公${gjjActual.toFixed(0)}+商${bizLoan.toFixed(0)})</span></td>
                             <td><strong>${formatMoney(Math.round(mp))}</strong>元/月</td>
-                            <td>${'★'.repeat(p.ratings.location)}${'☆'.repeat(5 - p.ratings.location)}</td>
-                            <td>${'★'.repeat(p.ratings.value)}${'☆'.repeat(5 - p.ratings.value)}</td>
                             <td>${p.favorite ? '⭐' : ''}</td>
                         </tr>`;
                     }).join('')}
                 </tbody>
             `;
+        }
+
+        // ===== Sync Budgets =====
+        function syncBudgets(type) {
+            if (type === 'down') {
+                const val = document.getElementById('kpiDown').value;
+                document.getElementById('calcDown').value = val;
+                localStorage.setItem('budgetDown', val);
+            } else if (type === 'gjj') {
+                const val = document.getElementById('kpiGjj').value;
+                document.getElementById('calcGjj').value = val;
+                localStorage.setItem('budgetGjj', val);
+            } else if (type === 'calcDown') {
+                const val = document.getElementById('calcDown').value;
+                if(document.getElementById('kpiDown')) document.getElementById('kpiDown').value = val;
+                localStorage.setItem('budgetDown', val);
+            } else if (type === 'calcGjj') {
+                const val = document.getElementById('calcGjj').value;
+                if(document.getElementById('kpiGjj')) document.getElementById('kpiGjj').value = val;
+                localStorage.setItem('budgetGjj', val);
+            }
+            renderCompare();
+            calculate();
+        }
+
+        // 利率变化时也持久化
+        function syncRate(field) {
+            const val = document.getElementById(field).value;
+            localStorage.setItem(field, val);
+            renderCompare();
+            calculate();
         }
 
         // ===== Calculator =====
@@ -1599,6 +1579,7 @@
             }
             container.innerHTML = timeline.slice().reverse().map(t => `
                 <div class="timeline-item">
+                    <button class="timeline-delete" style="right: 48px;" onclick="editTimeline(${t.id})" title="编辑">✏️</button>
                     <button class="timeline-delete" onclick="deleteTimeline(${t.id})" title="删除">🗑</button>
                     <div class="timeline-date">${t.date}</div>
                     <div class="timeline-title">${t.title}</div>
@@ -1607,23 +1588,52 @@
             `).join('');
         }
 
+        let currentEditTimelineId = null;
+
         async function addTimeline() {
             const input = document.getElementById('timelineInput');
             const text = input.value.trim();
             if (!text) return;
 
-            const now = new Date();
-            const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            // 只按第一个冒号分割，避免内容中的冒号被错误截断
+            const sepIdx = text.indexOf('：') > -1 ? text.indexOf('：') : text.indexOf(':');
+            let title, content;
+            if (sepIdx > 0) {
+                title = text.substring(0, sepIdx).trim();
+                content = text.substring(sepIdx + 1).trim();
+            } else {
+                title = '记录';
+                content = text;
+            }
 
-            const sep = text.indexOf('：') > -1 ? '：' : ':';
-            const parts = text.split(sep);
-            const title = parts.length > 1 ? parts[0].trim() : '记录';
-            const content = parts.length > 1 ? parts.slice(1).join(sep).trim() : text;
+            if (currentEditTimelineId) {
+                const t = timeline.find(x => x.id === currentEditTimelineId);
+                const item = await api(`/timeline/${currentEditTimelineId}`, { 
+                    method: 'PUT', 
+                    body: { date: t.date, title, content } 
+                });
+                const idx = timeline.findIndex(x => x.id === currentEditTimelineId);
+                if (idx > -1) timeline[idx] = item;
+                currentEditTimelineId = null;
+                document.getElementById('timelineSubmitBtn').innerText = '记录';
+            } else {
+                const now = new Date();
+                const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const item = await api('/timeline', { method: 'POST', body: { date, title, content } });
+                timeline.unshift(item);
+            }
 
-            const item = await api('/timeline', { method: 'POST', body: { date, title, content } });
-            timeline.unshift(item);
             renderTimeline();
             input.value = '';
+        }
+
+        function editTimeline(id) {
+            const t = timeline.find(x => x.id === id);
+            if (!t) return;
+            currentEditTimelineId = id;
+            document.getElementById('timelineInput').value = `${t.title}：${t.content}`;
+            document.getElementById('timelineInput').focus();
+            document.getElementById('timelineSubmitBtn').innerText = '保存修改';
         }
 
         async function deleteTimeline(id) {
@@ -1790,6 +1800,12 @@
 
         // ===== Init =====
         (async () => {
+            // 从 localStorage 恢复保存的利率设置
+            const savedGjjRate = localStorage.getItem('calcGjjRate');
+            const savedBizRate = localStorage.getItem('calcBizRate');
+            if (savedGjjRate) document.getElementById('calcGjjRate').value = savedGjjRate;
+            if (savedBizRate) document.getElementById('calcBizRate').value = savedBizRate;
+
             await loadData();
             renderAll();
             calculate();
