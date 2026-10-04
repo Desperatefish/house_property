@@ -985,6 +985,9 @@
             <div class="calc-container">
                 <div class="calc-panel">
                     <div class="calc-title">🧮 贷款参数</div>
+                    <p style="font-size:12px;color:var(--text-muted);line-height:1.55;margin:-4px 0 14px;">
+                        首套 · 住宅 · 夫妻公积金 · 无房票。公积金 2.6% 是政策利率；商贷没有全市统一价，默认 3.05%（5年期 LPR 3.50% − 45BP，2026-09-20），可改成银行报价。
+                    </p>
                     <div class="form-group">
                         <label>房屋总价（万元）</label>
                         <input type="number" id="calcPrice" value="190" oninput="calculate()">
@@ -994,16 +997,16 @@
                         <input type="number" id="calcDown" value="65" oninput="syncBudgets('calcDown')">
                     </div>
                     <div class="form-group">
-                        <label>公积金贷款（万元）</label>
+                        <label>公积金贷款（万元）<span style="color:var(--text-muted);font-weight:400"> — 夫妻家庭上限 100</span></label>
                         <input type="number" id="calcGjj" value="100" oninput="syncBudgets('calcGjj')">
                     </div>
                     <div class="form-group">
-                        <label>公积金利率（%）</label>
-                        <input type="number" id="calcGjjRate" value="2.6" step="0.1" oninput="syncRate('calcGjjRate')">
+                        <label>公积金利率（%）<span style="color:var(--text-muted);font-weight:400"> — 首套 5 年以上</span></label>
+                        <input type="number" id="calcGjjRate" value="2.6" step="0.01" oninput="syncRate('calcGjjRate')">
                     </div>
                     <div class="form-group">
-                        <label>商贷利率（%）</label>
-                        <input type="number" id="calcBizRate" value="3.0" step="0.1" oninput="syncRate('calcBizRate')">
+                        <label>商贷利率（%）<span style="color:var(--text-muted);font-weight:400"> — 参考报价，不是政策利率</span></label>
+                        <input type="number" id="calcBizRate" value="3.05" step="0.01" oninput="syncRate('calcBizRate')">
                     </div>
                     <div class="form-group">
                         <label>贷款年限</label>
@@ -1023,7 +1026,14 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>建筑面积（㎡）<span style="color:var(--text-muted);font-weight:400"> — 用于契税计算</span></label>
+                        <label>交易类型</label>
+                        <select id="calcDeal" onchange="syncDeal()">
+                            <option value="二手房" selected>二手房（另计买方中介费 1.2%）</option>
+                            <option value="新房">新房（不计买方中介费）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>建筑面积（㎡）<span style="color:var(--text-muted);font-weight:400"> — 家庭唯一住房契税</span></label>
                         <input type="number" id="calcArea" value="91" oninput="calculate()">
                     </div>
                 </div>
@@ -1213,6 +1223,45 @@
             return n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
 
+        // 2026-10-04 核对后的首套口径。公积金是政策利率；商贷没有全市统一执行价。
+        const POLICY = {
+            version: '2026-10-04',
+            gjjRate: 2.6,
+            gjjCapWan: 100,
+            lpr5y: 3.5,
+            bizRate: 3.05,
+            minDownRatio: 0.2,
+            deedTaxSmall: 0.01,
+            deedTaxLarge: 0.015,
+            agentFeeRate: 0.012
+        };
+
+        function readNumber(id, fallback) {
+            const el = document.getElementById(id);
+            const n = el ? parseFloat(el.value) : NaN;
+            return Number.isFinite(n) ? n : fallback;
+        }
+
+        function formatRatePercent(rate) {
+            const pct = rate * 100;
+            return (Math.round(pct * 10) / 10 % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+        }
+
+        // 公积金不超过家庭上限，也不超过总价减首付。首付低于 20% 只提示，不改用户填的数。
+        function splitLoan(price, down, gjjInput) {
+            const totalLoan = Math.max(0, price - down);
+            const gjjAsk = Math.max(0, gjjInput);
+            const gjjActual = Math.min(totalLoan, gjjAsk, POLICY.gjjCapWan);
+            return {
+                totalLoan,
+                gjjActual,
+                bizLoan: Math.max(0, totalLoan - gjjActual),
+                downRatio: price > 0 ? down / price : 0,
+                gjjCapped: gjjAsk > POLICY.gjjCapWan + 1e-9,
+                downTooLow: price > 0 && down / price + 1e-9 < POLICY.minDownRatio
+            };
+        }
+
         // ===== Render KPIs =====
         function renderKPIs() {
             const grid = document.getElementById('kpiGrid');
@@ -1377,11 +1426,11 @@
             const minP = Math.min(...prices), maxP = Math.max(...prices);
             const minU = Math.min(...unitPrices), maxU = Math.max(...unitPrices);
 
-            const downPayment = parseFloat(document.getElementById('calcDown')?.value) || 65;
-            const gjjLoan = parseFloat(document.getElementById('calcGjj')?.value) || 100;
-            const gjjRate = parseFloat(document.getElementById('calcGjjRate')?.value) || 2.6;
-            const bizRate = parseFloat(document.getElementById('calcBizRate')?.value) || 3.0;
-            const years = parseInt(document.getElementById('calcYears')?.value) || 30;
+            const downPayment = readNumber('calcDown', 65);
+            const gjjLoan = readNumber('calcGjj', POLICY.gjjCapWan);
+            const gjjRate = readNumber('calcGjjRate', POLICY.gjjRate);
+            const bizRate = readNumber('calcBizRate', POLICY.bizRate);
+            const years = parseInt(document.getElementById('calcYears')?.value, 10) || 30;
 
             const ages = properties.map(houseAge);
             const minAge = Math.min(...ages.filter(a => a !== null));
@@ -1407,10 +1456,8 @@
                     ${properties.map((p, i) => {
                         const up = unitPrice(p);
                         const age = ages[i];
-                        const totalLoan = Math.max(0, p.price - downPayment);
-                        const bizLoan = Math.max(0, totalLoan - gjjLoan);
-                        const gjjActual = Math.min(totalLoan, gjjLoan);
-                        const mp = monthlyPayment(gjjActual, gjjRate, years) + monthlyPayment(bizLoan, bizRate, years);
+                        const loan = splitLoan(p.price, downPayment, gjjLoan);
+                        const mp = monthlyPayment(loan.gjjActual, gjjRate, years) + monthlyPayment(loan.bizLoan, bizRate, years);
                         return `<tr>
                             <td><strong>${p.name}</strong></td>
                             <td>${p.layout || '—'}</td>
@@ -1420,7 +1467,7 @@
                             <td>${p.yearBuilt || '—'}</td>
                             <td style="color:${ageColor(age)}">${age !== null ? age + '年' : '—'}</td>
                             <td>${p.propertyType || ''} ${p.buildingType || ''} ${p.decoration || ''}</td>
-                            <td>${totalLoan.toFixed(1)}万 <span style="font-size:11px;color:var(--text-muted)">(公${gjjActual.toFixed(0)}+商${bizLoan.toFixed(0)})</span></td>
+                            <td>${loan.totalLoan.toFixed(1)}万 <span style="font-size:11px;color:var(--text-muted)">(公${loan.gjjActual.toFixed(0)}+商${loan.bizLoan.toFixed(0)})</span></td>
                             <td><strong>${formatMoney(Math.round(mp))}</strong>元/月</td>
                             <td>${p.favorite ? '⭐' : ''}</td>
                         </tr>`;
@@ -1461,19 +1508,25 @@
         }
 
         // ===== Calculator =====
+        function syncDeal() {
+            localStorage.setItem('calcDeal', document.getElementById('calcDeal').value);
+            calculate();
+        }
+
         function calculate() {
-            const price = parseFloat(document.getElementById('calcPrice').value) || 0;
-            const down = parseFloat(document.getElementById('calcDown').value) || 0;
-            const gjj = parseFloat(document.getElementById('calcGjj').value) || 0;
-            const gjjRate = parseFloat(document.getElementById('calcGjjRate').value) || 0;
-            const bizRate = parseFloat(document.getElementById('calcBizRate').value) || 0;
-            const years = parseInt(document.getElementById('calcYears').value) || 30;
+            const price = readNumber('calcPrice', 0);
+            const down = readNumber('calcDown', 0);
+            const gjj = readNumber('calcGjj', 0);
+            const gjjRate = readNumber('calcGjjRate', POLICY.gjjRate);
+            const bizRate = readNumber('calcBizRate', POLICY.bizRate);
+            const years = parseInt(document.getElementById('calcYears').value, 10) || 30;
             const method = document.getElementById('calcMethod')?.value || '1'; // 1: 等额本息, 2: 等额本金
 
-            const totalLoan = Math.max(0, price - down);
-            const gjjActual = Math.min(totalLoan, gjj);
-            const bizLoan = Math.max(0, totalLoan - gjjActual);
-            const downRatio = price > 0 ? ((down / price) * 100).toFixed(1) : 0;
+            const loan = splitLoan(price, down, gjj);
+            const totalLoan = loan.totalLoan;
+            const gjjActual = loan.gjjActual;
+            const bizLoan = loan.bizLoan;
+            const downRatio = price > 0 ? (loan.downRatio * 100).toFixed(1) : 0;
 
             let gjjMonthlyText, bizMonthlyText, totalMonthlyText;
             let totalInterest = 0;
@@ -1518,12 +1571,17 @@
                 bizMonthlyText = `首月 ${formatMoney(Math.round(bizFirstMonth))}<span style="font-size:11px">元</span>`;
             }
 
-            // 税费估算：买方只承担契税 + 中介费
-            const area = parseFloat(document.getElementById('calcArea')?.value) || 0;
-            const taxRate = area > 140 ? 0.015 : 0.01; // 首套：≤140㎡ 1%，>140㎡ 1.5%
-            const tax = price * taxRate; // 契税（按挂牌价估算）
-            const agentFee = price * 0.012; // 买方中介费 1.2%
+            // 买方：家庭唯一住房契税 + 二手房中介费。契税按填写总价估算，实际按网签价。
+            const area = readNumber('calcArea', 0);
+            const deal = document.getElementById('calcDeal')?.value || '二手房';
+            const taxRate = area > 140 ? POLICY.deedTaxLarge : POLICY.deedTaxSmall;
+            const tax = price * taxRate;
+            const agentRate = deal === '新房' ? 0 : POLICY.agentFeeRate;
+            const agentFee = price * agentRate;
             const totalExtra = tax + agentFee;
+            const warns = [];
+            if (loan.downTooLow) warns.push(`首付 ${downRatio}% 低于公积金最低 20%（贷款也不能超过房价的 80%）`);
+            if (loan.gjjCapped) warns.push(`公积金填写 ${gjj.toFixed(1)} 万，夫妻家庭上限 ${POLICY.gjjCapWan} 万，按 ${gjjActual.toFixed(1)} 万计`);
 
             document.getElementById('calcResults').innerHTML = `
                 <div class="result-item">
@@ -1562,10 +1620,14 @@
                     <div class="result-label">还款总额</div>
                     <div class="result-value" style="font-size:16px">${(totalRepay / 10000).toFixed(1)}<span style="font-size:11px">万</span></div>
                 </div>
+                ${warns.length ? `<div class="result-item" style="grid-column: span 2; border-color: rgba(244,63,94,0.35);">
+                    <div class="result-label">口径提示</div>
+                    <div style="font-size:12px;color:var(--accent-rose);line-height:1.5;">${warns.join('；')}</div>
+                </div>` : ''}
                 <div class="result-item" style="grid-column: span 2;">
-                    <div class="result-label">契税 + 中介费（买方）</div>
+                    <div class="result-label">${deal === '新房' ? '契税（买方，新房无中介费）' : '契税 + 中介费（买方）'}</div>
                     <div class="result-value" style="font-size:16px;color:var(--accent-rose)">≈${totalExtra.toFixed(1)}<span style="font-size:11px">万</span></div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">契税 ${tax.toFixed(1)}万（${area}㎡，${(taxRate*100).toFixed(0)}%）+ 中介费 ${agentFee.toFixed(1)}万（1.2%）</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">契税 ${tax.toFixed(1)}万（家庭唯一住房，${area}㎡，${formatRatePercent(taxRate)}，按总价估算）${deal === '新房' ? '' : ` + 中介费 ${agentFee.toFixed(1)}万（${formatRatePercent(agentRate)}）`}</div>
                 </div>
             `;
         }
@@ -1800,11 +1862,18 @@
 
         // ===== Init =====
         (async () => {
-            // 从 localStorage 恢复保存的利率设置
+            // 政策版本变了就换上新的默认利率，避免手机上还留着旧的 3.0%
+            if (localStorage.getItem('policyVersion') !== POLICY.version) {
+                localStorage.setItem('calcGjjRate', String(POLICY.gjjRate));
+                localStorage.setItem('calcBizRate', String(POLICY.bizRate));
+                localStorage.setItem('policyVersion', POLICY.version);
+            }
             const savedGjjRate = localStorage.getItem('calcGjjRate');
             const savedBizRate = localStorage.getItem('calcBizRate');
+            const savedDeal = localStorage.getItem('calcDeal');
             if (savedGjjRate) document.getElementById('calcGjjRate').value = savedGjjRate;
             if (savedBizRate) document.getElementById('calcBizRate').value = savedBizRate;
+            if (savedDeal) document.getElementById('calcDeal').value = savedDeal;
 
             await loadData();
             renderAll();
